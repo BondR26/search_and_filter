@@ -1,0 +1,10 @@
+﻿  search_monitor.cpp
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(81,25): error C2065: 'IValuePattern': undeclared identifier
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(81,17): error C2923: 'ATL::CComPtr': 'IValuePattern' is not a valid template type argument for parameter 'T'
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(81): message : see declaration of 'IValuePattern'
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(81,53): error C2133: 'pValuePattern': unknown size
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(81,40): error C2512: 'ATL::CComPtr': no appropriate default constructor available
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\atlmfc\include\atlcomcli.h(318,1): message : see declaration of 'ATL::CComPtr'
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(83,51): error C2679: binary '&&': no operator found which takes a right-hand operand of type 'ATL::CComPtr' (or there is no acceptable conversion)
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(83,51): message : could be 'built-in C++ operator&&(bool, bool)'
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(83,51): message : while trying to match the argument list '(bool, ATL::CComPtr)'

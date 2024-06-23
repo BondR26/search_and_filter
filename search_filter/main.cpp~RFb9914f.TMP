@@ -1,0 +1,169 @@
+﻿#include <iostream>
+
+#include <Windows.h>
+#include <UIAutomation.h>
+#include <comutil.h>
+#include <atlbase.h> // For CComPtr
+
+#pragma comment(lib, "UIAutomationCore.lib")
+#pragma comment(lib, "comsuppw.lib")
+
+void InitializeUIAutomation(IUIAutomation** pAutomation) 
+{
+    // Initialize COM library
+    HRESULT hr = CoInitialize(NULL);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to initialize COM library" << std::endl;
+        exit(1);
+    }
+
+    // Create UI Automation object
+    hr = CoCreateInstance(CLSID_CUIAutomation, NULL, CLSCTX_INPROC_SERVER, IID_IUIAutomation, (void**)pAutomation);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create UI Automation object" << std::endl;
+        CoUninitialize();
+        exit(1);
+    }
+}
+
+IUIAutomationElement* FindBrowserWindow(IUIAutomation* pAutomation, const std::wstring& title)
+{
+    CComPtr<IUIAutomationElement> pRootElement;
+    pAutomation->GetRootElement(&pRootElement);
+
+    VARIANT v = _variant_t(title.c_str());
+    CComPtr<IUIAutomationCondition> pCondition;
+    pAutomation->CreatePropertyCondition(UIA_NamePropertyId, v, &pCondition);
+
+    CComPtr<IUIAutomationElement> pBrowserWindow;
+    pRootElement->FindFirst(TreeScope_Descendants, pCondition, &pBrowserWindow);
+
+    return pBrowserWindow.Detach();
+}
+
+
+
+void SetUpEventHandler(IUIAutomation* pAutomation, IUIAutomationElement* pSearchBox) {
+    // Define the event handler class (in reality, you should implement IUIAutomationEventHandler)
+    class EventHandler : public IUIAutomationEventHandler {
+        LONG _refCount;
+    public:
+        EventHandler() : _refCount(1) {}
+
+        ULONG STDMETHODCALLTYPE AddRef() {
+            return InterlockedIncrement(&_refCount);
+        }
+
+        ULONG STDMETHODCALLTYPE Release() {
+            LONG count = InterlockedDecrement(&_refCount);
+            if (count == 0) delete this;
+            return count;
+        }
+
+        HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvObject) {
+            if (riid == IID_IUnknown || riid == IID_IUIAutomationEventHandler) {
+                *ppvObject = this;
+                AddRef();
+                return S_OK;
+            }
+            *ppvObject = NULL;
+            return E_NOINTERFACE;
+        }
+
+        HRESULT STDMETHODCALLTYPE HandleAutomationEvent(IUIAutomationElement* sender, EVENTID eventId)
+        {
+            if (eventId == UIA_Text_TextChangedEventId) {
+                BSTR name;
+                sender->get_CurrentName(&name);
+                std::wcout << L"Search box text changed: " << name << std::endl;
+
+                // Modify the text programmatically
+                std::wstring newText = L"Modified Search Text";
+                sender->SetFocus();
+                //sender->SetWindowText(newText.c_str());
+
+                SysFreeString(name);
+            }
+            return S_OK;
+        }
+    };
+
+    CComPtr<EventHandler> pHandler = new EventHandler();
+    pAutomation->AddAutomationEventHandler(UIA_Text_TextChangedEventId, pSearchBox, TreeScope_Element, NULL, pHandler);
+}
+
+int main()
+{
+    CoInitialize(NULL);
+    HWND hwnd = NULL;
+    while (true)
+    {
+        hwnd = FindWindowEx(0, hwnd, L"Chrome_WidgetWin_1", NULL);
+        if (!hwnd)
+            break;
+        if (!IsWindowVisible(hwnd))
+            continue;
+
+        CComQIPtr<IUIAutomation> uia;
+        if (FAILED(uia.CoCreateInstance(CLSID_CUIAutomation)) || !uia)
+            break;
+
+        CComPtr<IUIAutomationElement> root;
+        if (FAILED(uia->ElementFromHandle(hwnd, &root)) || !root)
+            break;
+
+        CComPtr<IUIAutomationCondition> condition;
+
+        // this is essentaial the enum version of the Adress and search bar
+        uia->CreatePropertyCondition(UIA_ControlTypePropertyId,
+            CComVariant(0xC354), &condition);
+
+
+        CComPtr<IUIAutomationElement> search_bar;
+        if (FAILED(root->FindFirst(TreeScope_Descendants, condition, &search_bar))
+            || !search_bar)
+            continue; //maybe we don't have the right tab, continue...
+
+        CComVariant url;
+        search_bar->GetCurrentPropertyValue(UIA_ValueValuePropertyId, &url);
+        MessageBox(0, url.bstrVal, 0, 0);
+        break;
+    }
+    CoUninitialize();
+    //IUIAutomation* pAutomation = NULL;
+    //InitializeUIAutomation(&pAutomation);
+    //
+    //IUIAutomationElement* pBrowserWindow = FindBrowserWindow(pAutomation, L"Google Chrome"); // Adjust the title as necessary
+    //if (pBrowserWindow == NULL) 
+    //{
+    //    std::cerr << "Browser window not found" << std::endl;
+    //    pAutomation->Release();
+    //    CoUninitialize();
+    //    return 1;
+    //}
+    //
+    //IUIAutomationElement* pSearchBox = FindAddressBar(pAutomation, pBrowserWindow, L"Address and search bar");
+    //if (pSearchBox == NULL) {
+    //    std::cerr << "Search box not found" << std::endl;
+    //    pBrowserWindow->Release();
+    //    pAutomation->Release();
+    //    CoUninitialize();
+    //    return 1;
+    //}
+
+    //SetUpEventHandler(pAutomation, pSearchBox);
+    //
+    //// Message loop to keep the application running and handling events
+    //MSG msg;
+    //while (GetMessage(&msg, NULL, 0, 0)) {
+    //    TranslateMessage(&msg);
+    //    DispatchMessage(&msg);
+    //}
+    //
+    //pSearchBox->Release();
+    //pBrowserWindow->Release();
+    //pAutomation->Release();
+    //CoUninitialize();
+
+    return 0;
+}

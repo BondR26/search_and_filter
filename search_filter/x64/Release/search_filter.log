@@ -1,0 +1,8 @@
+﻿  search_monitor.cpp
+C:\Users\Administrator\source\repos\search_filter\search_filter\search_monitor.cpp(67,19): warning C4101: 'name': unreferenced local variable
+  Generating code
+  0 of 653 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  search_filter.vcxproj -> C:\Users\Administrator\source\repos\search_filter\x64\Release\search_filter.exe
